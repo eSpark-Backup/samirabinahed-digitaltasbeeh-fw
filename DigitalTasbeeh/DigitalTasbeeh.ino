@@ -9,11 +9,14 @@ LED_3_W -> PA5 = 1
 LED_4_O -> PA6 = 2
 LED_4_W -> PA7 = 3
 
-SW_1    -> PB4 = 5
+VIB_1    -> PA3 = 16
 
+SW_1    -> PB4 = 5
 */
 
 #define SW_1    5 // PB4
+
+#define VIB_1   16 // PA3
 
 #define LED_1_O 7 // PB2
 #define LED_1_W 6 // PB3
@@ -49,6 +52,9 @@ void setup() {
   digitalWrite(LED_2_O, LOW);
   digitalWrite(LED_3_O, LOW);
   digitalWrite(LED_4_O, LOW);
+
+  // Initialize Vibration Motor
+  pinMode(VIB_1, OUTPUT);
 
   // Initialize Switch Pin
   pinMode(SW_1, INPUT);
