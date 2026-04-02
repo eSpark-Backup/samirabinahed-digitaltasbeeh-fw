@@ -1,36 +1,21 @@
-/* 
-PIN DEFINITIONS
-  SW_1    -> PB4 = 5
-  VIB_1   -> PA3 = 16
-  VBATT   -> PA2 = 15
-  LED_1_O -> PB2 = 7
-  LED_1_W -> PB3 = 6
-  LED_2_O -> PB5 = 4
-  LED_2_W -> PB1 = 8
-  LED_3_O -> PA4 = 0
-  LED_3_W -> PA5 = 1
-  LED_4_O -> PA6 = 2
-  LED_4_W -> PA7 = 3
-*/
-
 // ---------------- PIN DEFINITIONS ----------------
-#define SW_1    5 // PB4
-#define VIB_1   16// PA3
-#define VBATT   15// PA2
-#define LED_1_O 7 // PB2
-#define LED_1_W 6 // PB3
-#define LED_2_O 4 // PB5
-#define LED_2_W 8 // PB1
-#define LED_3_O 0 // PA4
-#define LED_3_W 1 // PA5
-#define LED_4_O 2 // PA6
-#define LED_4_W 3 // PA7
+#define SW_1    5   // PB4
+#define VIB_1   16  // PA3
+#define VBATT   15  // PA2
+#define LED_1_O 7   // PB2
+#define LED_1_W 6   // PB3
+#define LED_2_O 4   // PB5
+#define LED_2_W 8   // PB1
+#define LED_3_O 0   // PA4
+#define LED_3_W 1   // PA5
+#define LED_4_O 2   // PA6
+#define LED_4_W 3   // PA7
 
 // ---------------- CONSTANTS ----------------
 const uint16_t cycles[4] = {33, 99, 100, 1000};
 
-#define MAX_VOLTAGE 3.0
-#define MIN_VOLTAGE 2.0
+#define MAX_VOLTAGE         3.0 // Coil Cell
+#define MIN_VOLTAGE         2.0 // Cutoff Voltage
 #define LOW_BATTERY_VOLTAGE (MIN_VOLTAGE + (MAX_VOLTAGE-MIN_VOLTAGE)*0.1) //10% of the battery life
 
 #define DEBOUNCE_TIME      50
@@ -38,9 +23,9 @@ const uint16_t cycles[4] = {33, 99, 100, 1000};
 #define LONG_PRESS_6S      6000 // reset
 #define MODE_TIMEOUT       5000 // 5 seconds
 
-#define LED_BLINK_TIME     50 //50ms
-#define VIBRATION_40       40 //40ms
-#define VIBRATION_80       80 //80ms
+#define LED_BLINK_TIME     50   //50ms
+#define VIBRATION_40       40   //40ms
+#define VIBRATION_80       80   //80ms
 
 #define LOW_BATT_TIMEOUT   10000
 
@@ -176,9 +161,8 @@ void readButton()
 
 void checkBattery()
 {
-  // Dummy logic for now (replace with ADC reading)
   int adc = analogRead(VBATT);
-  float voltage = (adc*1024)/3.0;
+  float voltage = (adc*3.0)/1024.0;
 
   if(voltage <= LOW_BATTERY_VOLTAGE)
     lowBattery = true;
