@@ -49,11 +49,13 @@ unsigned long lastActivityTime = 0;
 unsigned long ledTimer = 0;
 unsigned long vibEndTime = 0;
 unsigned long lowBattTimer = 0;
+unsigned long idleTime = 0;
 
 // States
 bool vibrationActive = false;
 bool orangeLedActive = false;
 bool lowBattery = false;
+bool start_idle_time = false;
 
 enum State {
   STATE_COUNTING,
@@ -65,7 +67,7 @@ enum State {
 State currentState = STATE_COUNTING;
 
 void setup() {
-  // Initialize Blue(White) Leds
+  // Initialize White Leds
   pinMode(LED_1_W, OUTPUT);
   pinMode(LED_2_W, OUTPUT);
   pinMode(LED_3_W, OUTPUT);
@@ -136,6 +138,7 @@ void readButton()
 
     if (reading != buttonState) {
       buttonState = reading;
+      start_idle_time = false;
 
       if (buttonState == HIGH) { // RELEASED
         unsigned long pressDuration = millis() - pressStartTime;
@@ -153,6 +156,9 @@ void readButton()
       else { // PRESSED
         pressStartTime = millis();
       }
+    }
+    else{
+      idle_tracking();
     }
   }
 
@@ -192,18 +198,21 @@ void handleCounting()
   if (evShortPress) {
     lastActivityTime = millis();
 
+    turnOnAllOrange();
+    orangeLedActive = true;
+
     // Low battery indication (does NOT block)
     if (lowBattery) {
-      turnOnAllOrange();
       lowBattTimer = millis();
+    }
+    else{
+      // Orange LED blink
+      ledTimer = millis();
     }
 
     count++;
 
-    // Orange LED blink
-    turnOnAllOrange();
-    ledTimer = millis();
-    orangeLedActive = true;
+    // turnOnAllOrange();
 
     // Cycle complete
     if (count >= cycles[currentMode]) {
@@ -263,10 +272,18 @@ void handleReset()
 
 void handleOutputs()
 {
-  // Orange LED OFF after blink
-  if (orangeLedActive && (millis() - ledTimer > LED_BLINK_TIME)) {
-    turnOffAllOrange();
-    orangeLedActive = false;
+  if (orangeLedActive) {
+    // Orange LED OFF after blink
+    if (!lowBattery && (millis() - ledTimer > LED_BLINK_TIME)) {
+      turnOffAllOrange();
+      orangeLedActive = false;
+    }
+    
+    // Low battery LED timeout
+    if (lowBattery && (millis() - lowBattTimer > LOW_BATT_TIMEOUT)) {
+      turnOffAllOrange();
+      orangeLedActive = false;
+    }
   }
 
   // Vibration OFF
@@ -275,10 +292,6 @@ void handleOutputs()
     vibrationActive = false;
   }
 
-  // Low battery LED timeout
-  if (lowBattery && (millis() - lowBattTimer > LOW_BATT_TIMEOUT)) {
-    turnOffAllOrange();
-  }
 }
 
 /*-----------------HELPERS--------------*/
@@ -296,6 +309,16 @@ void updateModeLEDs()
   digitalWrite(LED_3_W, currentMode >= 2);
   digitalWrite(LED_4_W, currentMode >= 3);
 }
+
+// If above function consumes more power below function will be used
+// void updateModeLEDs()
+// {
+//   digitalWrite(LED_1_W, currentMode == 0);
+//   digitalWrite(LED_2_W, currentMode == 1);
+//   digitalWrite(LED_3_W, currentMode == 2);
+//   digitalWrite(LED_4_W, currentMode == 3);
+// }
+
 
 void turnOnAllOrange()
 {
@@ -319,4 +342,11 @@ void turnOffAllWhite()
   digitalWrite(LED_2_W, LOW);
   digitalWrite(LED_3_W, LOW);
   digitalWrite(LED_4_W, LOW);
+}
+
+void idle_tracking(){
+  if(!start_idle_time){
+    idleTime = millis();
+    start_idle_time = true;
+  }
 }
