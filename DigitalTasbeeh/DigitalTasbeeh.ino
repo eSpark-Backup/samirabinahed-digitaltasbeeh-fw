@@ -1,3 +1,6 @@
+#include <avr/io.h>
+#include <avr/sleep.h>
+#include <avr/interrupt.h>
 // ---------------- PIN DEFINITIONS ----------------
 #define SW_1    5   // PB4
 #define VIB_1   16  // PA3
@@ -29,9 +32,11 @@ const uint16_t cycles[4] = {33, 99, 100, 1000};
 
 #define LOW_BATT_TIMEOUT   10000
 
+#define MAX_IDLE_TIME      10000 // 10 seconds used as example as it is not exactly given in requirements 
+
 // ---------------- VARIABLES ----------------
 uint16_t count = 0;
-uint8_t currentMode = 0;
+int8_t currentMode = 0;
 
 // Button handling
 bool buttonState = HIGH;
@@ -66,6 +71,11 @@ enum State {
 
 State currentState = STATE_COUNTING;
 
+ISR(PORTB_PORT_vect) {
+    // Clear interrupt flag
+    PORTB.INTFLAGS = PIN4_bm; // PB4
+}
+
 void setup() {
   // Initialize White Leds
   pinMode(LED_1_W, OUTPUT);
@@ -97,6 +107,12 @@ void setup() {
   
   // Initialize Vibration Motor
   pinMode(VBATT, INPUT_PULLUP);
+  
+  PORTB.DIRCLR = PIN4_bm; // PB4
+  PORTB.PIN2CTRL = PORT_PULLUPEN_bm | PORT_ISC_FALLING_gc; // interrupt on detecting LOW
+
+  sei(); // enable global interrupts
+
 }
 
 void loop() {
@@ -124,6 +140,9 @@ void loop() {
   }
 
   handleOutputs(); // LEDs, vibration (non-blocking)
+
+// Enter in Sleep Mode if idle 
+  enterSleepMode();
 }
 
 void readButton()
@@ -348,5 +367,20 @@ void idle_tracking(){
   if(!start_idle_time){
     idleTime = millis();
     start_idle_time = true;
+  }
+}
+
+void enterSleepMode(){
+  if(start_idle_time && millis() - idleTime >= MAX_IDLE_TIME){
+    idleTime = millis();
+    start_idle_time = false;
+    // Enter in Sleep mode
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+
+    sleep_cpu();  // CPU sleeps here
+
+    sleep_disable();
+
   }
 }
