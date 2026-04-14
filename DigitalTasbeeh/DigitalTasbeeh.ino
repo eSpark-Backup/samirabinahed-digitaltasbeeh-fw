@@ -54,13 +54,11 @@ unsigned long lastActivityTime = 0;
 unsigned long ledTimer = 0;
 unsigned long vibEndTime = 0;
 unsigned long lowBattTimer = 0;
-unsigned long idleTime = 0;
 
 // States
 bool vibrationActive = false;
 bool orangeLedActive = false;
 bool lowBattery = false;
-bool start_idle_time = false;
 
 enum State {
   STATE_COUNTING,
@@ -154,10 +152,9 @@ void readButton()
   }
 
   if ((millis() - lastDebounceTime) > DEBOUNCE_TIME) {
-
+    lastActivityTime = millis();
     if (reading != buttonState) {
       buttonState = reading;
-      start_idle_time = false;
 
       if (buttonState == HIGH) { // RELEASED
         unsigned long pressDuration = millis() - pressStartTime;
@@ -175,9 +172,6 @@ void readButton()
       else { // PRESSED
         pressStartTime = millis();
       }
-    }
-    else{
-      idle_tracking();
     }
   }
 
@@ -363,17 +357,9 @@ void turnOffAllWhite()
   digitalWrite(LED_4_W, LOW);
 }
 
-void idle_tracking(){
-  if(!start_idle_time){
-    idleTime = millis();
-    start_idle_time = true;
-  }
-}
-
 void enterSleepMode(){
-  if(start_idle_time && millis() - idleTime >= MAX_IDLE_TIME){
-    idleTime = millis();
-    start_idle_time = false;
+  if(millis() - lastActivityTime >= MAX_IDLE_TIME){
+    lastActivityTime = millis();
     // Enter in Sleep mode
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
@@ -381,6 +367,8 @@ void enterSleepMode(){
     sleep_cpu();  // CPU sleeps here
 
     sleep_disable();
+    
+    sei(); 
 
   }
 }
